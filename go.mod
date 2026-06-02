@@ -1,4 +1,4 @@
-module github.com/cheb0/roaring/v1
+module github.com/cheb0/roaring/v2
 
 go 1.24.0
 
