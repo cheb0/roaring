@@ -526,6 +526,16 @@ type IntPeekable interface {
 	AdvanceIfNeeded(minval uint32)
 }
 
+// IntReversePeekable allows you to look at the next reverse value without advancing and
+// advance as long as the next value is larger than maxval.
+type IntReversePeekable interface {
+	IntIterable
+	// PeekNext peeks the next value without advancing the iterator
+	PeekNext() uint32
+	// AdvanceIfNeeded advances as long as the next reverse value is larger than maxval
+	AdvanceIfNeeded(maxval uint32)
+}
+
 type intIterator struct {
 	pos              int
 	hs               uint32
@@ -613,7 +623,7 @@ func (ii *intIterator) Initialize(a *Bitmap) {
 type intReverseIterator struct {
 	pos              int
 	hs               uint32
-	iter             shortIterable
+	iter             shortReversePeekable
 	highlowcontainer *roaringArray
 
 	shortIter  reverseIterator
@@ -665,6 +675,29 @@ func (ii *intReverseIterator) Next() uint32 {
 		ii.init()
 	}
 	return x
+}
+
+// PeekNext peeks the next value without advancing the iterator
+func (ii *intReverseIterator) PeekNext() uint32 {
+	return uint32(ii.iter.peekNext()&maxLowBit) | ii.hs
+}
+
+// AdvanceIfNeeded advances as long as the next reverse value is larger than maxval
+func (ii *intReverseIterator) AdvanceIfNeeded(maxval uint32) {
+	to := maxval & 0xffff0000
+
+	for ii.HasNext() && ii.hs > to {
+		ii.pos--
+		ii.init()
+	}
+
+	if ii.HasNext() && ii.hs == to {
+		ii.iter.advanceIfNeeded(lowbits(maxval))
+		if !ii.iter.hasNext() {
+			ii.pos--
+			ii.init()
+		}
+	}
 }
 
 // IntReverseIterator is meant to allow you to iterate through the values of a bitmap, see Initialize(a *Bitmap)
@@ -1008,9 +1041,9 @@ func (rb *Bitmap) Iterator() IntPeekable {
 	return p
 }
 
-// ReverseIterator creates a new IntIterable to iterate over the integers contained in the bitmap, in sorted order;
+// ReverseIterator creates a new IntReversePeekable to iterate over the integers contained in the bitmap, in reverse sorted order;
 // the iterator becomes invalid if the bitmap is modified (e.g., with Add or Remove).
-func (rb *Bitmap) ReverseIterator() IntIterable {
+func (rb *Bitmap) ReverseIterator() IntReversePeekable {
 	p := new(intReverseIterator)
 	p.Initialize(rb)
 	return p

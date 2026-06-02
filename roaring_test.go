@@ -3172,6 +3172,94 @@ func TestIteratorAdvance(t *testing.T) {
 	})
 }
 
+func TestReverseIteratorPeekNext(t *testing.T) {
+	values := []uint32{0, 2, 15, 16, 31, 32, 33, 9999, MaxUint16, MaxUint32}
+	bm := New()
+
+	for n := 0; n < len(values); n++ {
+		bm.Add(values[n])
+	}
+
+	i := bm.ReverseIterator()
+	assert.True(t, i.HasNext())
+
+	for i.HasNext() {
+		assert.Equal(t, i.PeekNext(), i.Next())
+	}
+}
+
+func TestReverseIteratorAdvance(t *testing.T) {
+	values := []uint32{1, 2, 15, 16, 31, 32, 33, 9999, MaxUint16, MaxUint16 + 1, MaxUint32}
+	bm := New()
+
+	for n := 0; n < len(values); n++ {
+		bm.Add(values[n])
+	}
+
+	cases := []struct {
+		maxval   uint32
+		expected uint32
+	}{
+		{MaxUint32, MaxUint32},
+		{MaxUint32 - 1, MaxUint16 + 1},
+		{MaxUint16 + 1, MaxUint16 + 1},
+		{MaxUint16, MaxUint16},
+		{9998, 33},
+		{33, 33},
+		{30, 16},
+		{2, 2},
+		{1, 1},
+	}
+
+	t.Run("reverse advance by using a new int iterator", func(t *testing.T) {
+		for _, c := range cases {
+			i := bm.ReverseIterator()
+			i.AdvanceIfNeeded(c.maxval)
+
+			assert.True(t, i.HasNext())
+			assert.Equal(t, c.expected, i.PeekNext())
+		}
+	})
+
+	t.Run("reverse advance by using the same int iterator", func(t *testing.T) {
+		i := bm.ReverseIterator()
+
+		for _, c := range cases {
+			i.AdvanceIfNeeded(c.maxval)
+
+			assert.True(t, i.HasNext())
+			assert.Equal(t, c.expected, i.PeekNext())
+		}
+	})
+
+	t.Run("reverse advance out of a container value", func(t *testing.T) {
+		i := bm.ReverseIterator()
+
+		i.AdvanceIfNeeded(1)
+		assert.True(t, i.HasNext())
+		assert.EqualValues(t, 1, i.PeekNext())
+
+		i.AdvanceIfNeeded(0)
+		assert.False(t, i.HasNext())
+
+		i.AdvanceIfNeeded(0)
+		assert.False(t, i.HasNext())
+	})
+
+	t.Run("reverse advance on a value greater than pointed value", func(t *testing.T) {
+		i := bm.ReverseIterator()
+		i.AdvanceIfNeeded(29)
+
+		assert.True(t, i.HasNext())
+		assert.EqualValues(t, 16, i.PeekNext())
+
+		i.AdvanceIfNeeded(31)
+
+		assert.True(t, i.HasNext())
+		assert.EqualValues(t, 16, i.PeekNext())
+	})
+}
+
 func TestPackageFlipMaxRangeEnd(t *testing.T) {
 	var empty Bitmap
 	flipped := Flip(&empty, 0, MaxRange)

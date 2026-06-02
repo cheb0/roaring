@@ -11,6 +11,12 @@ type shortPeekable interface {
 	advanceIfNeeded(minval uint16)
 }
 
+type shortReversePeekable interface {
+	shortIterable
+	peekNext() uint16
+	advanceIfNeeded(maxval uint16)
+}
+
 type shortIterator struct {
 	slice []uint16
 	loc   int
@@ -49,6 +55,16 @@ func (si *reverseIterator) next() uint16 {
 	a := si.slice[si.loc]
 	si.loc--
 	return a
+}
+
+func (si *reverseIterator) peekNext() uint16 {
+	return si.slice[si.loc]
+}
+
+func (si *reverseIterator) advanceIfNeeded(maxval uint16) {
+	if si.hasNext() && si.peekNext() > maxval {
+		si.loc = retreatUntil(si.slice, si.loc, maxval)
+	}
 }
 
 type arrayContainerUnsetIterator struct {

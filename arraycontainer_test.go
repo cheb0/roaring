@@ -379,6 +379,10 @@ func TestArrayIteratorAdvance(t *testing.T) {
 	testContainerIteratorAdvance(t, newArrayContainer())
 }
 
+func TestArrayReverseIteratorAdvance(t *testing.T) {
+	testContainerReverseIteratorAdvance(t, newArrayContainer())
+}
+
 func TestArrayContainerResetTo(t *testing.T) {
 	array := newArrayContainer()
 	for i := 0; i < 1000; i++ {

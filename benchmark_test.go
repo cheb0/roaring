@@ -676,6 +676,42 @@ func BenchmarkSparseAdvanceRoaring(b *testing.B) {
 	}
 }
 
+// go test -bench 'BenchmarkSparse(AdvanceRoaring|ReverseAdvanceRoaring)$' -benchmem -run -
+func BenchmarkSparseReverseAdvanceRoaring(b *testing.B) {
+	b.StopTimer()
+
+	s := NewBitmap()
+	initsize := 65000
+
+	for i := 0; i < initsize; i++ {
+		s.Add(uint32(i))
+	}
+
+	for _, gap := range []int{1, 2, 65, 650} {
+		b.Run(fmt.Sprintf("reverse advance from %d", gap), func(b *testing.B) {
+			b.ReportAllocs()
+			b.StartTimer()
+
+			diff := uint32(0)
+
+			for n := 0; n < b.N; n++ {
+				val := uint32((gap * n) % initsize)
+
+				i := s.ReverseIterator()
+				i.AdvanceIfNeeded(val)
+
+				diff += val - i.PeekNext()
+			}
+
+			b.StopTimer()
+
+			if diff != 0 {
+				b.Fatalf("Expected diff 0, got %d", diff)
+			}
+		})
+	}
+}
+
 // go test -bench BenchmarkSparseAdvance -run -
 func BenchmarkSparseAdvanceOnHugeData(b *testing.B) {
 	b.ReportAllocs()

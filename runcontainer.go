@@ -1219,6 +1219,28 @@ func (ri *runReverseIterator16) next() uint16 {
 	return next
 }
 
+func (ri *runReverseIterator16) peekNext() uint16 {
+	return ri.rc.iv[ri.curIndex].start + ri.curPosInIndex
+}
+
+func (ri *runReverseIterator16) advanceIfNeeded(maxval uint16) {
+	if !ri.hasNext() || ri.peekNext() <= maxval {
+		return
+	}
+
+	interval, isPresent, _ := ri.rc.search(int(maxval))
+	if isPresent {
+		ri.curIndex = interval
+		ri.curPosInIndex = maxval - ri.rc.iv[ri.curIndex].start
+		return
+	}
+
+	ri.curIndex = interval
+	if ri.curIndex >= 0 {
+		ri.curPosInIndex = ri.rc.iv[ri.curIndex].length
+	}
+}
+
 func (rc *runContainer16) newManyRunIterator16() *runIterator16 {
 	return rc.newRunIterator16()
 }
@@ -1978,7 +2000,7 @@ func (rc *runContainer16) getShortIterator() shortPeekable {
 	return rc.newRunIterator16()
 }
 
-func (rc *runContainer16) getReverseIterator() shortIterable {
+func (rc *runContainer16) getReverseIterator() shortReversePeekable {
 	return rc.newRunReverseIterator16()
 }
 

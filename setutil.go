@@ -457,6 +457,32 @@ func advanceUntil(
 	return upper
 }
 
+func retreatUntil(array []uint16, pos int, max uint16) int {
+	if pos < 0 {
+		return -1
+	}
+
+	if array[pos] <= max {
+		return pos
+	}
+
+	lower := 0
+	upper := pos
+	for lower <= upper {
+		mid := (lower + upper) >> 1
+		if array[mid] <= max {
+			if mid == pos || array[mid+1] > max {
+				return mid
+			}
+			lower = mid + 1
+		} else {
+			upper = mid - 1
+		}
+	}
+
+	return -1
+}
+
 func onesidedgallopingintersect2by2(
 	smallset []uint16,
 	largeset []uint16,
