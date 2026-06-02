@@ -2484,6 +2484,10 @@ func TestRuntimeIteratorAdvance(t *testing.T) {
 	testContainerIteratorAdvance(t, newRunContainer16())
 }
 
+func TestRuntimeReverseIteratorAdvance(t *testing.T) {
+	testContainerReverseIteratorAdvance(t, newRunContainer16())
+}
+
 func TestIntervalOverlaps(t *testing.T) {
 	// contiguous runs
 	a := newInterval16Range(0, 9)

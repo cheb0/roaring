@@ -54,7 +54,7 @@ func (ac *arrayContainer) getShortIterator() shortPeekable {
 	return &shortIterator{ac.content, 0}
 }
 
-func (ac *arrayContainer) getReverseIterator() shortIterable {
+func (ac *arrayContainer) getReverseIterator() shortReversePeekable {
 	return &reverseIterator{ac.content, len(ac.content) - 1}
 }
 

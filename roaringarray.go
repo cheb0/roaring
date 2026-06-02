@@ -48,7 +48,7 @@ type container interface {
 	getShortIterator() shortPeekable
 	getUnsetIterator() shortPeekable
 	iterate(cb func(x uint16) bool) bool
-	getReverseIterator() shortIterable
+	getReverseIterator() shortReversePeekable
 	getManyIterator() manyIterable
 	contains(i uint16) bool
 	maximum() uint16
@@ -769,6 +769,32 @@ func (ra *roaringArray) advanceUntil(min uint16, pos int) int {
 		}
 	}
 	return upper
+}
+
+func (ra *roaringArray) retreatUntil(max uint16, pos int) int {
+	if pos < 0 {
+		return -1
+	}
+
+	if ra.keys[pos] <= max {
+		return pos
+	}
+
+	lower := 0
+	upper := pos
+	for lower <= upper {
+		mid := (lower + upper) >> 1
+		if ra.keys[mid] <= max {
+			if mid == pos || ra.keys[mid+1] > max {
+				return mid
+			}
+			lower = mid + 1
+		} else {
+			upper = mid - 1
+		}
+	}
+
+	return -1
 }
 
 func (ra *roaringArray) markAllAsNeedingCopyOnWrite() {

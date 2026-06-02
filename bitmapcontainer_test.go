@@ -204,6 +204,10 @@ func TestBitmapIteratorAdvance(t *testing.T) {
 	testContainerIteratorAdvance(t, newBitmapContainer())
 }
 
+func TestBitmapReverseIteratorAdvance(t *testing.T) {
+	testContainerReverseIteratorAdvance(t, newBitmapContainer())
+}
+
 // go test -bench BenchmarkShortIteratorAdvance -run -
 func BenchmarkShortIteratorAdvanceBitmap(b *testing.B) {
 	benchmarkContainerIteratorAdvance(b, newBitmapContainer())

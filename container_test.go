@@ -139,6 +139,74 @@ func testContainerIteratorAdvance(t *testing.T, con container) {
 	})
 }
 
+func testContainerReverseIteratorAdvance(t *testing.T, con container) {
+	values := []uint16{1, 2, 15, 16, 31, 32, 33, 9999}
+	for _, v := range values {
+		con.iadd(v)
+	}
+
+	cases := []struct {
+		maxval   uint16
+		expected uint16
+	}{
+		{MaxUint16, 9999},
+		{9999, 9999},
+		{9998, 33},
+		{33, 33},
+		{30, 16},
+		{16, 16},
+		{3, 2},
+		{2, 2},
+		{1, 1},
+	}
+
+	t.Run("reverse advance by using a new short iterator", func(t *testing.T) {
+		for _, c := range cases {
+			i := con.getReverseIterator()
+			i.advanceIfNeeded(c.maxval)
+
+			assert.True(t, i.hasNext())
+			assert.Equal(t, c.expected, i.peekNext())
+		}
+	})
+
+	t.Run("reverse advance by using the same short iterator", func(t *testing.T) {
+		i := con.getReverseIterator()
+
+		for _, c := range cases {
+			i.advanceIfNeeded(c.maxval)
+
+			assert.True(t, i.hasNext())
+			assert.Equal(t, c.expected, i.peekNext())
+		}
+	})
+
+	t.Run("reverse advance out of a container value", func(t *testing.T) {
+		i := con.getReverseIterator()
+
+		i.advanceIfNeeded(1)
+		assert.True(t, i.hasNext())
+		assert.EqualValues(t, 1, i.peekNext())
+
+		i.advanceIfNeeded(0)
+		assert.False(t, i.hasNext())
+
+		i.advanceIfNeeded(0)
+		assert.False(t, i.hasNext())
+	})
+
+	t.Run("reverse advance on a value that is greater than the pointed value", func(t *testing.T) {
+		i := con.getReverseIterator()
+		i.advanceIfNeeded(29)
+		assert.True(t, i.hasNext())
+		assert.EqualValues(t, 16, i.peekNext())
+
+		i.advanceIfNeeded(31)
+		assert.True(t, i.hasNext())
+		assert.EqualValues(t, 16, i.peekNext())
+	})
+}
+
 func benchmarkContainerIteratorAdvance(b *testing.B, con container) {
 	for _, initsize := range []int{1, 650, 6500, MaxUint16} {
 		for i := 0; i < initsize; i++ {

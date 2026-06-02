@@ -182,6 +182,16 @@ func (bcsi *reverseBitmapContainerShortIterator) hasNext() bool {
 	return bcsi.i >= 0
 }
 
+func (bcsi *reverseBitmapContainerShortIterator) peekNext() uint16 {
+	return uint16(bcsi.i)
+}
+
+func (bcsi *reverseBitmapContainerShortIterator) advanceIfNeeded(maxval uint16) {
+	if bcsi.hasNext() && bcsi.peekNext() > maxval {
+		bcsi.i = bcsi.ptr.PrevSetBit(int(maxval))
+	}
+}
+
 func newReverseBitmapContainerShortIterator(a *bitmapContainer) *reverseBitmapContainerShortIterator {
 	if a.cardinality == 0 {
 		return &reverseBitmapContainerShortIterator{a, -1}
@@ -189,7 +199,7 @@ func newReverseBitmapContainerShortIterator(a *bitmapContainer) *reverseBitmapCo
 	return &reverseBitmapContainerShortIterator{a, int(a.maximum())}
 }
 
-func (bc *bitmapContainer) getReverseIterator() shortIterable {
+func (bc *bitmapContainer) getReverseIterator() shortReversePeekable {
 	return newReverseBitmapContainerShortIterator(bc)
 }
 
